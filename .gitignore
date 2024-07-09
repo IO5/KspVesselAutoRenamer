@@ -4,3 +4,6 @@ obj/
 packages/
 KSPDevPath.xml
 *.csproj.user
+*.dll
+*.pdb
+*.zip
