@@ -24,6 +24,8 @@ namespace VesselAutoRenamer
             { 'G', new Scheme.GreekAlphabet{ letterCase=Case.Upper } },
             { 'w', new Scheme.GreekAlphabetAsWords{ letterCase=Case.Lower } },
             { 'W', new Scheme.GreekAlphabetAsWords{ letterCase=Case.Upper } },
+            { 'p', new Scheme.NatoPhoneticAlphabet{ letterCase=Case.Lower } },
+            { 'P', new Scheme.NatoPhoneticAlphabet{ letterCase=Case.Upper } },
         };
 
         public override void OnLoad(ConfigNode node)
@@ -255,7 +257,7 @@ namespace VesselAutoRenamer
             {
                 if (Schemes.TryGetValue(c, out scheme))
                 {
-                    var variableWidthScheme = scheme as VariableWidthScheme;
+                    var variableWidthScheme = scheme as Scheme.VariableWidthScheme;
                     if (variableWidthScheme != null)
                     {
                         var clone = variableWidthScheme.Clone();
@@ -303,13 +305,19 @@ namespace VesselAutoRenamer
                 { 27, "GreC Alpha" },
                 { 28, "GreD zeta" },
                 { 29, "es%cape 5%" },
+                { 30, "Delta Force" },
+                { 31, "Excel1 Z" },
+                { 32, "Excel2 AA" },
+                { 33, "Excel3 ZZ" },
+                { 34, "Excel4 aCbX" },
+                { 35, "Excel5 xyZ" },
             };
 
             Action<string, string> test = (format, expected) =>
             {
                 var value = TryFormatName(format);
                 if (value != expected)
-                    Debug.LogError($"Assertion Failed: \"{value}\" != \"{expected}\"");//throw new Exception($"Assertion Failed: \"{value}\" != \"{expected}\"");
+                    Debug.LogError($"Assertion Failed: \"{value}\" != \"{expected}\"");
             };
 
             test("", "");
@@ -354,6 +362,13 @@ namespace VesselAutoRenamer
             test("GreC %W", "GreC Beta");
             test("GreD %w", "GreD eta");
             test("es%%cape %d%%", "es%cape 6%");
+            test("%p", "alpha");
+            test("%P Force", "Echo Force");
+            test("Excel1 %a", "Excel1 aa");
+            test("Excel2 %A", "Excel2 AB");
+            test("Excel3 %A", "Excel3 AAA");
+            test("Excel4 %A", "Excel4 ACBY");
+            test("Excel5 %a", "Excel5 xza");
 
             nameHistory.Clear();
         }

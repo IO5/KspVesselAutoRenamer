@@ -12,20 +12,97 @@ namespace VesselAutoRenamer
         public abstract string GetNthName(short ord);
     }
 
-    public abstract class VariableWidthScheme : NamingScheme
-    {
-        public short width = 0;
-
-        public VariableWidthScheme Clone()
-        {
-            return this.MemberwiseClone() as VariableWidthScheme;
-        }
-    }
-
     public enum Case { Lower, Upper };
 
     namespace Scheme
     {
+        public abstract class VariableWidthScheme : NamingScheme
+        {
+            public short width = 0;
+
+            public VariableWidthScheme Clone()
+            {
+                return this.MemberwiseClone() as VariableWidthScheme;
+            }
+        }
+
+        public abstract class Alphabet : NamingScheme
+        {
+            public Case letterCase;
+
+            protected abstract short AlphabetLength { get; }
+
+            protected abstract short LetterToNumber(char letter);
+
+            protected abstract char NumberToLetter(short num);
+
+            public override bool TryConvertToNumber(string str, out short result)
+            {
+                result = 0;
+
+                foreach (char c in str)
+                {
+                    var idx = LetterToNumber(c);
+                    if (idx == -1)
+                        return false;
+
+                    result = (short)(result * AlphabetLength + idx + 1);
+                }
+
+                return true;
+            }
+
+            public override string GetNthName(short ord)
+            {
+                if (ord <= 0)
+                    return "";
+
+                string result = "";
+
+                do
+                {
+                    var reminder = (short)((ord - 1) % AlphabetLength);
+                    result = NumberToLetter((short)(reminder)) + result;
+                    ord = (short)((ord - reminder) / AlphabetLength);
+                }
+                while (ord > 0);
+
+                return result;
+            }
+        }
+
+        public abstract class WordList : NamingScheme
+        {
+            public Case letterCase;
+
+            protected abstract List<string> words { get; }
+
+            public override bool TryConvertToNumber(string str, out short result)
+            {
+                result = 0;
+
+                str = str.ToLower();
+                var idx = words.FindIndex(l => str == l);
+                if (idx == -1)
+                    return false;
+
+                result = (short)(idx + 1);
+                return true;
+            }
+
+            public override string GetNthName(short ord)
+            {
+                if (ord <= 0 || ord > words.Count)
+                    return "";
+
+                var result = words[ord - 1];
+                if (letterCase == Case.Upper)
+                    result = char.ToUpper(result[0]) + result.Substring(1);
+
+                return result;
+            }
+        }
+
         public class Decimal : VariableWidthScheme
         {
             public override bool TryConvertToNumber(string str, out short result) => Int16.TryParse(str, out result);
@@ -42,7 +119,7 @@ namespace VesselAutoRenamer
                 return Int16.TryParse(str, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out result);
             }
 
-            public override string GetNthName(short ord) => String.Format("{0:" + (letterCase == Case.Upper ? 'X' : 'x' ) + width.ToString() + "}", ord);
+            public override string GetNthName(short ord) => String.Format("{0:" + (letterCase == Case.Upper ? 'X' : 'x') + width.ToString() + "}", ord);
         }
 
         public class Roman : NamingScheme
@@ -119,42 +196,27 @@ namespace VesselAutoRenamer
             }
         }
 
-        public class LatinAlphabet : NamingScheme
+
+        public class LatinAlphabet : Alphabet
         {
-            public Case letterCase;
+            protected override short AlphabetLength { get { return 'Z' - 'A' + 1; } }
 
-            public override bool TryConvertToNumber(string str, out short result)
+            protected override short LetterToNumber(char letter) // zero based
             {
-                result = 0;
-
-                if (str.Length == 1)
-                {
-                    char c = char.ToUpper(str[0]);
-                    if (c >= 'A' && c <= 'Z')
-                    {
-                        result = (short)(c - 'A' + 1);
-                        return true;
-                    }
-                }
-
-                return false;
+                return (short)(char.ToLower(letter) - 'a');
             }
 
-            public override string GetNthName(short ord)
+            protected override char NumberToLetter(short num) // zero based
             {
-                if (ord <= 0 || ord > ('Z' - 'A' + 1))
-                    return "";
-
                 char c = letterCase == Case.Upper ? 'A' : 'a';
-                c += (char)(ord - 1);
-
-                return c.ToString();
+                c += (char)num;
+                return c;
             }
         }
 
-        public class GreekAlphabet : NamingScheme
+        public class GreekAlphabet : Alphabet
         {
-            public Case letterCase;
+            protected override short AlphabetLength { get { return (short)alphabet.Count; } }
 
             private static List<(char, char)> alphabet = new List<(char, char)>
             {
@@ -184,37 +246,20 @@ namespace VesselAutoRenamer
                 ('Ω', 'ω'),
             };
 
-            public override bool TryConvertToNumber(string str, out short result)
+            protected override short LetterToNumber(char letter)
             {
-                result = 0;
-
-                if (str.Length != 1)
-                    return false;
-
-                char c = str[0];
-                var idx = alphabet.FindIndex(l => c == l.Item1 || c == l.Item2);
-                if (idx == -1)
-                    return false;
-
-                result = (short)(idx + 1);
-                return true;
+                return (short)alphabet.FindIndex(l => letter == l.Item1 || letter == l.Item2);
             }
 
-            public override string GetNthName(short ord)
+            protected override char NumberToLetter(short num)
             {
-                if (ord <= 0 || ord > alphabet.Count)
-                    return "";
-
-                var (upper, lower) = alphabet[ord - 1];
-                char c = letterCase == Case.Upper ? upper : lower;
-                return c.ToString();
+                var (upper, lower) = alphabet[num];
+                return letterCase == Case.Upper ? upper : lower;
             }
         }
 
-        public class GreekAlphabetAsWords : NamingScheme
+        public class GreekAlphabetAsWords : WordList
         {
-            public Case letterCase;
-
             private static List<string> alphabet = new List<string>
             {
                 "alpha",
@@ -243,30 +288,42 @@ namespace VesselAutoRenamer
                 "omega",
             };
 
-            public override bool TryConvertToNumber(string str, out short result)
+            protected override List<string> words { get { return alphabet; } }
+        }
+
+        public class NatoPhoneticAlphabet : WordList
+        {
+            private static List<string> alphabet = new List<string>
             {
-                result = 0;
+                "alpha",
+                "bravo",
+                "charlie",
+                "delta",
+                "echo",
+                "foxtrot",
+                "golf",
+                "hotel",
+                "india",
+                "juliett",
+                "kilo",
+                "lima",
+                "mike",
+                "november",
+                "oscar",
+                "papa",
+                "quebec",
+                "romeo",
+                "sierra",
+                "tango",
+                "uniform",
+                "victor",
+                "whiskey",
+                "xray",
+                "yankee",
+                "zulu",
+            };
 
-                str = str.ToLower();
-                var idx = alphabet.FindIndex(l => str == l);
-                if (idx == -1)
-                    return false;
-
-                result = (short)(idx + 1);
-                return true;
-            }
-
-            public override string GetNthName(short ord)
-            {
-                if (ord <= 0 || ord > alphabet.Count)
-                    return "";
-
-                var result = alphabet[ord - 1];
-                if (letterCase == Case.Upper)
-                    result = char.ToUpper(result[0]) + result.Substring(1);
-
-                return result;
-            }
+            protected override List<string> words { get { return alphabet; } }
         }
     }
 }

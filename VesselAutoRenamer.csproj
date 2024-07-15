@@ -55,10 +55,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild">
-    <ItemGroup>
-      <GameDataFiles Include="$(SolutionDir)\GameData\$(ProjectName)\*.*" />
-    </ItemGroup>
-    <Copy SourceFiles="@(GameDataFiles)" DestinationFolder="$(KSPInstallPath)\GameData\$(ProjectName)\" />
     <Copy SourceFiles="$(TargetDir)$(ProjectName).dll" DestinationFolder="$(KSPInstallPath)\GameData\$(ProjectName)\" />
     <Copy SourceFiles="$(TargetDir)$(ProjectName).pdb" DestinationFolder="$(KSPInstallPath)\GameData\$(ProjectName)\" />
   </Target>
