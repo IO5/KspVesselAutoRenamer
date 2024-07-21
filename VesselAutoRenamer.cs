@@ -16,6 +16,8 @@ namespace VesselAutoRenamer
             { 'd', new Scheme.Decimal{ } },
             { 'x', new Scheme.Hex{ letterCase=Case.Lower } },
             { 'X', new Scheme.Hex{ letterCase=Case.Upper } },
+            { 'b', new Scheme.Binary{ letterCase=Case.Lower } },
+            { 'B', new Scheme.Binary{ letterCase=Case.Upper } },
             { 'r', new Scheme.Roman{ letterCase=Case.Lower } },
             { 'R', new Scheme.Roman{ letterCase=Case.Upper } },
             { 'a', new Scheme.LatinAlphabet{ letterCase=Case.Lower } },
