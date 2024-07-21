@@ -122,6 +122,37 @@ namespace VesselAutoRenamer
             public override string GetNthName(short ord) => String.Format("{0:" + (letterCase == Case.Upper ? 'X' : 'x') + width.ToString() + "}", ord);
         }
 
+        public class Binary : NamingScheme
+        {
+            public bool padded;
+
+            public override bool TryConvertToNumber(string str, out short result)
+            {
+                try
+                {
+                    // Convert the binary string to an int using base 2
+                    result = Convert.ToInt16(str, 2);
+                    return true;
+                }
+                catch
+                {
+                    result = 0;
+                    return false;
+                }
+            }
+
+            public override string GetNthName(short ord)
+            {
+                string result = "0";
+                result = Convert.ToString(ord, toBase: 2);
+                if (padded)
+                {
+                    result = result.PadLeft(8, '0');
+                }
+                return result;
+            }
+        }
+
         public class Roman : NamingScheme
         {
             private static Dictionary<char, short> FromRoman = new Dictionary<char, short>()
