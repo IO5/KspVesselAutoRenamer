@@ -141,18 +141,14 @@ namespace VesselAutoRenamer
                 }
             }
 
-
             public override string GetNthName(short ord)
             {
                 string result = "0";
-
                 result = Convert.ToString(ord, toBase: 2);
-
                 if (letterCase == Case.Upper)
                 {
                     result = result.PadLeft(8, '0');
                 }
-
                 return result;
             }
         }
