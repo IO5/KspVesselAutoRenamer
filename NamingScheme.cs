@@ -124,7 +124,7 @@ namespace VesselAutoRenamer
 
         public class Binary : VariableWidthScheme
         {
-            public Case letterCase;
+            public bool padded;
 
             public override bool TryConvertToNumber(string str, out short result)
             {
@@ -145,7 +145,7 @@ namespace VesselAutoRenamer
             {
                 string result = "0";
                 result = Convert.ToString(ord, toBase: 2);
-                if (letterCase == Case.Upper)
+                if (padded)
                 {
                     result = result.PadLeft(8, '0');
                 }
