@@ -31,6 +31,8 @@ namespace VesselAutoRenamer
             { 'W', new Scheme.GreekAlphabetAsWords{ letterCase=Case.Upper } },
             { 'p', new Scheme.NatoPhoneticAlphabet{ letterCase=Case.Lower } },
             { 'P', new Scheme.NatoPhoneticAlphabet{ letterCase=Case.Upper } },
+            { 'l', new Scheme.LegacyIcaoPhoneticAlphabet{ letterCase=Case.Lower } },
+            { 'L', new Scheme.LegacyIcaoPhoneticAlphabet{ letterCase=Case.Upper } },
         };
 
         public override void OnLoad(ConfigNode node)

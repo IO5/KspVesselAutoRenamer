@@ -356,5 +356,40 @@ namespace VesselAutoRenamer
 
             protected override List<string> words { get { return alphabet; } }
         }
+
+        public class LegacyIcaoPhoneticAlphabet : WordList
+        {
+            private static List<string> alphabet = new List<string>
+            {
+                "able",
+                "baker",
+                "charlie",
+                "dog",
+                "easy",
+                "fox",
+                "george",
+                "how",
+                "item",
+                "jig",
+                "king",
+                "love",
+                "mike",
+                "nan",
+                "oboe",
+                "peter",
+                "queen",
+                "roger",
+                "sugar",
+                "tare",
+                "uncle",
+                "victor",
+                "william",
+                "xray",
+                "yoke",
+                "zebra",
+            };
+
+            protected override List<string> words { get { return alphabet; } }
+        }
     }
 }
