@@ -2,8 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Rendering;
+using static KSP.UI.Screens.Mapview.MapNode;
 
 namespace VesselAutoRenamer
 {
@@ -68,7 +71,16 @@ namespace VesselAutoRenamer
             GameEvents.OnFlightGlobalsReady.Add(OnFlightGlobalsReady);
             GameEvents.OnVesselRollout.Add(OnVesselRollout);
             GameEvents.onVesselRename.Add(OnVesselRename);
-            GameEvents.onVesselsUndocking.Add(OnVesselsUndocking);
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                GameEvents.onPartVesselNamingChanged.Add(HandleVesselNamingSymmetry);
+                GameEvents.onEditorPartPlaced.Add(HandleVesselNamingSymmetry);
+            }
+            else
+            {
+                GameEvents.onVesselsUndocking.Add(OnDecouple);
+                GameEvents.onPartDeCoupleNewVesselComplete.Add(OnDecouple);
+            }
 
 #if DEBUG
             RunTests();
@@ -80,7 +92,16 @@ namespace VesselAutoRenamer
             GameEvents.OnFlightGlobalsReady.Remove(OnFlightGlobalsReady);
             GameEvents.OnVesselRollout.Remove(OnVesselRollout);
             GameEvents.onVesselRename.Remove(OnVesselRename);
-            GameEvents.onVesselsUndocking.Remove(OnVesselsUndocking);
+            if (HighLogic.LoadedSceneIsEditor)
+            {
+                GameEvents.onPartVesselNamingChanged.Remove(HandleVesselNamingSymmetry);
+                GameEvents.onEditorPartPlaced.Remove(HandleVesselNamingSymmetry);
+            }
+            else
+            {
+                GameEvents.onVesselsUndocking.Remove(OnDecouple);
+                GameEvents.onPartDeCoupleNewVesselComplete.Remove(OnDecouple);
+            }
         }
 
         protected void OnFlightGlobalsReady(bool ready)
@@ -92,25 +113,77 @@ namespace VesselAutoRenamer
         protected void OnVesselRollout(ShipConstruct ship)
         {
             Vessel vessel = FlightGlobals.ActiveVessel;
+
             string ogName = vessel.vesselName;
             string newName = TryFormatName(ogName.Trim());
 
+            if (newName == ogName)
+            {
+                foreach (var line in ship.shipDescription.Split('\n'))
+                {
+                    var bracketStart = line.IndexOf('[');
+                    if (bracketStart == -1)
+                        continue;
+
+                    var bracketEnd = line.IndexOf(']', bracketStart);
+                    if (bracketEnd == -1)
+                        continue;
+
+                    newName = line.Substring(bracketStart + 1, bracketEnd - bracketStart - 1).Trim();
+                    newName = TryFormatName(newName);
+                }
+            }
+
             if (newName != ogName)
             {
+                UpdateVesselNaming(vessel, newName);
                 vessel.vesselName = newName;
                 GameEvents.onVesselRename.Fire(new GameEvents.HostedFromToAction<Vessel, string>(vessel, ogName, newName));
-                UpdateNameHistory(vessel);
             }
+
+            UpdateNameHistory(vessel);
         }
 
         protected void OnVesselRename(GameEvents.HostedFromToAction<Vessel, string> eventData)
         {
             UpdateNameHistory(eventData.host);
         }
-        protected void OnVesselsUndocking(Vessel a, Vessel b)
+
+        protected void OnDecouple(Vessel a, Vessel b)
         {
+            var aNewName = TryFormatName(a.vesselName.Trim());
+            var bNewName = TryFormatName(b.vesselName.Trim());
+
+            UpdateVesselNaming(a, aNewName);
+            UpdateVesselNaming(b, bNewName);
+
+            a.vesselName = aNewName;
+            b.vesselName = bNewName;
+
             UpdateNameHistory(a);
             UpdateNameHistory(b);
+        }
+
+        protected void HandleVesselNamingSymmetry(Part part)
+        {
+            foreach (var child in part.children)
+                HandleVesselNamingSymmetry(child);
+
+            if (string.IsNullOrEmpty(part?.vesselNaming?.vesselName))
+                return;
+
+            foreach (var counterpart in part.symmetryCounterparts)
+            {
+                if (string.IsNullOrEmpty(counterpart?.vesselNaming?.vesselName))
+                {
+                    counterpart.vesselNaming = new VesselNaming();
+                    counterpart.vesselNaming.vesselName = part.vesselNaming.vesselName;
+                    counterpart.vesselNaming.vesselType = part.vesselNaming.vesselType;
+                    counterpart.vesselNaming.namingPriority = part.vesselNaming.namingPriority;
+
+                    RefreshPartVesselNamingDisplay(counterpart);
+                }
+            }
         }
 
         public void UpdateNameHistory(Vessel vessel)
@@ -143,6 +216,27 @@ namespace VesselAutoRenamer
                 return;
 
             nameHistory[vessel.persistentId] = vessel.GetDisplayName();
+        }
+
+        static protected void UpdateVesselNaming(Vessel vessel, string newName)
+        {
+            if (vessel.vesselName == newName)
+                return;
+
+            foreach (var part in vessel.parts.Where(p => p?.vesselNaming?.vesselName == vessel.vesselName))
+            {
+                part.vesselNaming.vesselName = newName;
+                GameEvents.onPartVesselNamingChanged.Fire(part);
+
+                RefreshPartVesselNamingDisplay(part);
+            }
+        }
+
+        static internal MethodInfo dynMethod = typeof(Part).GetMethod("RefreshVesselNamingPAWDisplay", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        static protected void RefreshPartVesselNamingDisplay(Part part)
+        {
+            dynMethod.Invoke(part, new object[] {});
         }
 
         protected void PopulateHistory()
