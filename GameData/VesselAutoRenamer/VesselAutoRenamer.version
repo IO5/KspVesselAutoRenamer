@@ -9,7 +9,7 @@
     "VERSION":
     {
         "MAJOR":1,
-        "MINOR":2,
+        "MINOR":3,
     },
     "KSP_VERSION":{"MAJOR":1,"MINOR":12,"PATCH":5}
 }
