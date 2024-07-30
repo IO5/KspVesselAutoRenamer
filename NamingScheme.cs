@@ -289,6 +289,59 @@ namespace VesselAutoRenamer
             }
         }
 
+        public class RussianAlphabet : Alphabet
+        {
+            protected override short AlphabetLength { get { return (short)alphabet.Count; } }
+
+            private static List<(char, char)> alphabet = new List<(char, char)>
+            {
+                ('А', 'а'),
+                ('Б', 'б'),
+                ('В', 'в'),
+                ('Г', 'г'),
+                ('Д', 'д'),
+                ('Е', 'е'),
+                ('Ё', 'ё'),
+                ('Ж', 'ж'),
+                ('З', 'з'),
+                ('И', 'и'),
+                ('Й', 'й'),
+                ('К', 'к'),
+                ('Л', 'л'),
+                ('М', 'м'),
+                ('Н', 'н'),
+                ('О', 'о'),
+                ('П', 'п'),
+                ('Р', 'р'),
+                ('С', 'с'),
+                ('Т', 'т'),
+                ('У', 'у'),
+                ('Ф', 'ф'),
+                ('Х', 'х'),
+                ('Ц', 'ц'),
+                ('Ч', 'ч'),
+                ('Ш', 'ш'),
+                ('Щ', 'щ'),
+                ('Ъ', 'ъ'),
+                ('Ы', 'ы'),
+                ('Ь', 'ь'),
+                ('Э', 'э'),
+                ('Ю', 'ю'),
+                ('Я', 'я'),
+            };
+
+            protected override short LetterToNumber(char letter)
+            {
+                return (short)alphabet.FindIndex(l => letter == l.Item1 || letter == l.Item2);
+            }
+
+            protected override char NumberToLetter(short num)
+            {
+                var (upper, lower) = alphabet[num];
+                return letterCase == Case.Upper ? upper : lower;
+            }
+        }
+
         public class GreekAlphabetAsWords : WordList
         {
             private static List<string> alphabet = new List<string>

@@ -33,6 +33,8 @@ namespace VesselAutoRenamer
             { 'P', new Scheme.NatoPhoneticAlphabet{ letterCase=Case.Upper } },
             { 'l', new Scheme.LegacyIcaoPhoneticAlphabet{ letterCase=Case.Lower } },
             { 'L', new Scheme.LegacyIcaoPhoneticAlphabet{ letterCase=Case.Upper } },
+            { 'c', new Scheme.RussianAlphabet{ letterCase=Case.Lower } },
+            { 'C', new Scheme.RussianAlphabet{ letterCase=Case.Upper } },
         };
 
         public override void OnLoad(ConfigNode node)
