@@ -170,7 +170,7 @@ namespace VesselAutoRenamer
 
         protected void HandleVesselNamingSymmetry(Part part)
         {
-            if (part.children != null)
+            if (part?.children != null)
             {
                 foreach (var child in part.children)
                     HandleVesselNamingSymmetry(child);
