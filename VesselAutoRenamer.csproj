@@ -49,6 +49,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DatePlaceholders.cs" />
     <Compile Include="NamingScheme.cs" />
     <Compile Include="VesselAutoRenamer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

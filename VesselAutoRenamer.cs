@@ -258,6 +258,8 @@ namespace VesselAutoRenamer
 
         protected string TryFormatName(string template)
         {
+            template = DatePlaceholders.ReplaceDatePlaceholders(template);
+
             var prefix = new StringBuilder();
             var suffix = template;
             var idx = suffix.IndexOf('%');
